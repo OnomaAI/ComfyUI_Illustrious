@@ -1,6 +1,6 @@
 # ComfyUI_Illustrious
 
-A [ComfyUI](https://github.com/comfyanonymous/ComfyUI) extension for generating image via NovelAI API.
+A [ComfyUI](https://github.com/comfyanonymous/ComfyUI) extension for generating image via Illustrious API.
 
 ## Installation
 
@@ -17,7 +17,7 @@ ILLUSTRIOUS_API_KEY=<ACCESS_TOKEN>
 
 You can get persistent API token by **My Profile > API Key Section > Create API Key** on Illustrious webpage.
 
-Otherwise, you can get access token which is valid for 30 days using [Illustrious-API](https://www.illustrious-xl.ai/).
+Otherwise, you can get access token which is valid for 30 days using [Illustrious API](https://www.illustrious-xl.ai/).
 
 ## Usage
 
