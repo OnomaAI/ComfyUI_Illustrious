@@ -27,4 +27,4 @@ Currently, only  Text-to-Image is supported, but we plan to support more feature
 
 Simply connect `GenerateILL` node and `Save Image` node.
 
-![generate](https://github.com/OnomaAI/ComfyUI_Illustrious/assets/illustrious_simple_generation.jpg)
+![[generate]([https://github.com/OnomaAI/ComfyUI_Illustrious/assets/illustrious_simple_generation.jpg](https://github.com/OnomaAI/ComfyUI_Illustrious/blob/main/assets/illustrious_simple_generation.jpg?raw=true))](https://github.com/OnomaAI/ComfyUI_Illustrious/blob/main/assets/illustrious_simple_generation.jpg?raw=true)
