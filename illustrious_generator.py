@@ -20,11 +20,7 @@ if not ILLUSTRIOUS_API_KEY:
 
 fundamental_classes = []
 fundamental_node = node_wrapper(fundamental_classes)
-MODELS = [
-    "ILXL v1.0", "ILXL v1.1", "ILXL v2.0 Base", "ILXL v2.0 Refined",
-    "ILXL v3.0 Creative+", "ILXL v3.0 Creative", "ILXL v3.0 Expressive+", "ILXL v3.0 Expressive",
-    "ILXL v3.5 Creative", "ILXL v3.5 Expressive"
-]
+MODELS = ["ILXL v1.0", "ILXL v1.1", "ILXL v2.0 Base", "ILXL v2.0 Refined","ILXL v3.0 Creative+", "ILXL v3.0 Creative", "ILXL v3.0 Expressive+", "ILXL v3.0 Expressive","ILXL v3.5 Creative", "ILXL v3.5 Expressive"]
 
 @fundamental_node
 class IllustriousGenerate:
@@ -54,12 +50,11 @@ class IllustriousGenerate:
                 "scheduler": (['normal', 'karras', 'exponential', 'sgm_uniform', 'simple','ddim_uniform', 'beta'],),
                 "seed": ("INT", {"min": -1, "max": 2**32 - 1, "default": -1}),
                 "n_requests": ("INT", {"min": 1, "max": 10, "default": 1}),
-                "threads": ("INT", {"min": 1, "max": 10, "default": 1}),
             }
         }
 
-    RETURN_TYPES = ("IMAGE",)
-    RETURN_NAMES = ("images",)
+    RETURN_TYPES = ("IMAGE","STRING","STRING")
+    RETURN_NAMES = ("images","usage","balance")
     FUNCTION = "generate"
     custom_name = "Generate 🎨🅘🅛🅛"
     CATEGORY = "Illustrious"
@@ -86,11 +81,10 @@ class IllustriousGenerate:
     @staticmethod
     def _b64_to_tensor(data_url_or_b64: str) -> torch.Tensor:
         """Handle both bare base64 strings and full data URLs."""
-        if "," in data_url_or_b64:
-            data_url_or_b64 = data_url_or_b64.split(",", 1)[1]
         raw = base64.b64decode(data_url_or_b64)
         pil = Image.open(io.BytesIO(raw))
         return IllustriousGenerate._pil_to_tensor(pil)
+    
 
     def generate(
         self,
@@ -105,7 +99,6 @@ class IllustriousGenerate:
         scheduler,
         seed,
         n_requests,
-        threads,
     ):
         base_params = {
             "modelId": MODELS.index(model_name) + 1,
@@ -121,7 +114,6 @@ class IllustriousGenerate:
 
         headers = self._build_headers()
         warnings.simplefilter("ignore", InsecureRequestWarning)
-
         def _call(_):
             p = base_params.copy()
             p["seed"] = random.randint(0, 2**32 - 1) if seed == -1 else seed
@@ -130,20 +122,32 @@ class IllustriousGenerate:
                 url = "https://api.v1.illustrious-xl.ai/api/text-to-image/generate"
                 r = requests.post(url, headers=headers, json=p, verify=False, timeout=120)
                 r.raise_for_status()
-                imgs64 = r.json().get("images", [])
-                return [self._b64_to_tensor(b64) for b64 in imgs64]
+                return r.json()
             except Exception as e:
                 print(f"IllustriousGenerate error: {e}")
                 return []
 
-        with ThreadPoolExecutor(max_workers=threads) as pool:
-            tensors = [t for sub in pool.map(_call, range(n_requests)) for t in sub]
+        with ThreadPoolExecutor(max_workers=n_requests) as pool:
+            results = list(pool.map(_call, range(n_requests)))  
 
-        if not tensors:
-            tensors = [torch.zeros((height, width, 3), dtype=torch.float32)]
-
-        batch = torch.stack(tensors, dim=0) 
-        return (batch,)
+        tensors = []
+        usages = 0
+        balances = []
+        for result in results:
+            if not result:
+                tensors.append(torch.zeros((height, width, 3), dtype=torch.float32))
+            else:
+                tensor = result.get("images")[0]
+                usage = result.get("stardustUsage")
+                balance = result.get("stardustBalance")
+                tensors.append(self._b64_to_tensor(tensor))
+                usages+=usage
+                balances.append(int(balance))
+            balance = str(min(balances))
+        batch = torch.stack(tensors, dim=0)
+        print(f'usage: {usages}')
+        print(f'balance: {balance}')
+        return (batch,usages,balance)
 
 CLASS_MAPPINGS = get_node_names_mappings(fundamental_classes)
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(fundamental_classes)
