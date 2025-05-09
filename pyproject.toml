@@ -1,0 +1,14 @@
+[project]
+name = "comfyui_illustrious"
+description = "This extension helps generate images through Illustrious."
+version = "1.0.0"
+license = { file = "LICENSE" }
+dependencies = ["python-dotenv"]
+
+[project.urls]
+Repository = "https://github.com/onomaai/ComfyUI_Illustrious"
+
+[tool.comfy]
+PublisherId = "onomaai"
+DisplayName = "ComfyUI_Illustrious"
+Icon = ""
