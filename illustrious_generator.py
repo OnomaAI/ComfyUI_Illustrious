@@ -23,7 +23,7 @@ if not ILLUSTRIOUS_API_KEY:
 
 fundamental_classes = []
 fundamental_node = node_wrapper(fundamental_classes)
-MODELS = ["ILXL v1.0", "ILXL v1.1", "ILXL v2.0 Base", "ILXL v2.0 Refined","ILXL v3.0 Creative+", "ILXL v3.0 Creative", "ILXL v3.0 Expressive+", "ILXL v3.0 Expressive","ILXL v3.5 Creative", "ILXL v3.5 Expressive"]
+MODELS = ["ILXL v1.0", "ILXL v1.1", "ILXL v2.0 Base", "ILXL v2.0 Refined","ILXL v3.0 Creative+", "ILXL v3.0 Creative", "ILXL v3.0 Expressive+", "ILXL v3.0 Expressive","ILXL v3.5 Dummy"]
 
 @fundamental_node
 class IllustriousGenerate:
@@ -114,21 +114,23 @@ class IllustriousGenerate:
             "samplerName": sampler,
             "scheduler": scheduler,
         }
+        
 
         headers = self._build_headers()
         warnings.simplefilter("ignore", InsecureRequestWarning)
-        def _call(_):
+        def _call(_worker_idx):
             p = base_params.copy()
             p["seed"] = random.randint(0, 2**32 - 1) if seed == -1 else seed
-
+            p["seed"] = p["seed"] + _worker_idx
+            print(f"IllustriousGenerate: {base_params}")
             try:
                 url = "https://api.v1.illustrious-xl.ai/api/text-to-image/generate"
                 r = requests.post(url, headers=headers, json=p, verify=False, timeout=120)
                 r.raise_for_status()
                 return r.json()
             except Exception as e:
-                print(f"IllustriousGenerate error: {e}")
-                return []
+                message = str(r.json().get("message")) + f" (status code: {r.status_code})"
+                raise RuntimeError(f"IllustriousGenerate error: {message}")
 
         with ThreadPoolExecutor(max_workers=n_requests) as pool:
             results = list(pool.map(_call, range(n_requests)))  
