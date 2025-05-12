@@ -13,6 +13,9 @@ from PIL import Image
 from urllib3.exceptions import InsecureRequestWarning
 
 load_dotenv()
+cur_dir = os.path.dirname(os.path.abspath(__file__))
+if os.path.exists(os.path.join(cur_dir, ".env")):
+    load_dotenv(os.path.join(cur_dir, ".env"))
 
 ILLUSTRIOUS_API_KEY = os.getenv("ILLUSTRIOUS_API_KEY")
 if not ILLUSTRIOUS_API_KEY:
@@ -56,7 +59,7 @@ class IllustriousGenerate:
     RETURN_TYPES = ("IMAGE","STRING","STRING")
     RETURN_NAMES = ("images","usage","balance")
     FUNCTION = "generate"
-    custom_name = "Generate 🎨🅘🅛🅛"
+    custom_name = "Illustrious-XL-API-Generator"
     CATEGORY = "Illustrious"
 
     @staticmethod
