@@ -12,6 +12,7 @@ import requests
 from PIL import Image
 from urllib3.exceptions import InsecureRequestWarning
 
+
 load_dotenv()
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 if os.path.exists(os.path.join(cur_dir, ".env")):
@@ -23,7 +24,21 @@ if not ILLUSTRIOUS_API_KEY:
 
 fundamental_classes = []
 fundamental_node = node_wrapper(fundamental_classes)
-MODELS = ["ILXL v1.0", "ILXL v1.1", "ILXL v2.0 Base", "ILXL v2.0 Refined","ILXL v3.0 Creative+", "ILXL v3.0 Creative", "ILXL v3.0 Expressive+", "ILXL v3.0 Expressive","ILXL v3.5 Dummy"]
+
+def fetch_model_names() -> list[str]:
+    url = "https://api.v1.illustrious-xl.ai/api/model/list"
+    headers = {
+        "Content-Type": "application/json",
+        "x-illustrious-api-key": ILLUSTRIOUS_API_KEY,
+    }
+    resp = requests.get(url, headers=headers, timeout=10)
+    resp.raise_for_status()
+    models = resp.json() 
+    sorted_by_id = sorted(models, key=lambda m: m["id"])
+    return [m["name"] for m in sorted_by_id]
+
+MODELS = fetch_model_names()
+
 
 @fundamental_node
 class IllustriousGenerate:
@@ -31,7 +46,6 @@ class IllustriousGenerate:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                # API key is handled via environment variable
                 "model_name": (MODELS,),
                 "width": ("INT", {"min": 256, "max": 2048, "default": 1024}),
                 "height": ("INT", {"min": 256, "max": 2048, "default": 1024}),
@@ -75,15 +89,11 @@ class IllustriousGenerate:
 
     @staticmethod
     def _pil_to_tensor(img: Image.Image) -> torch.Tensor:
-        """
-        PIL.Image (RGB) → torch.Tensor [H,W,C], float32, 0-1
-        """
         arr = np.asarray(img.convert("RGB"), dtype=np.float32) / 255.0
         return torch.from_numpy(arr)
 
     @staticmethod
     def _b64_to_tensor(data_url_or_b64: str) -> torch.Tensor:
-        """Handle both bare base64 strings and full data URLs."""
         raw = base64.b64decode(data_url_or_b64)
         pil = Image.open(io.BytesIO(raw))
         return IllustriousGenerate._pil_to_tensor(pil)
@@ -153,6 +163,116 @@ class IllustriousGenerate:
         print(f'usage: {usages}')
         print(f'balance: {balance}')
         return (batch,usages,balance)
+    
+
+@fundamental_node
+class IllustriousTagBooster:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "text": ("STRING", {"multiline": True, "default": ""}),
+                "tag_length": (["short", "medium", "long"], {"default": "short"}),
+                "ban_tags": ("STRING", {"multiline": True, "default": ""}),
+                "format": ("STRING", {"multiline": True, "default": "<|special|>, \n<|characters|>, <|copyrights|>, \n<|artist|>, \n<|general|>, \n<|quality|>, <|meta|>, <|rating|>"}),
+                "temperature": ("FLOAT", {"min": 0.0, "max": 1.0, "default": 0.5}),
+                "top_p": ("FLOAT", {"min": 0.0, "max": 1.0, "default": 0.9}),
+                "top_k": ("INT", {"min": 0, "max": 100, "default": 100}),
+                "seed": ("INT", {"min": -1, "max": 2**32 - 1, "default": -1}),
+                "mode": (["merge input string", "just prompt"], {"default": "just prompt"}),
+            }
+        }
+
+    RETURN_TYPES = ("STRING","STRING","STRING")
+    RETURN_NAMES = ("tags","usage","balance")
+    FUNCTION = "boost_tags"
+    custom_name = "Illustrious-XL-TagBooster"
+    CATEGORY = "Illustrious"
+
+    def boost_tags(
+        self,
+        text,
+        tag_length,
+        ban_tags,
+        format,
+        temperature,
+        top_p,
+        top_k,
+        seed,
+        mode,
+    ):
+        payload = {
+            "text": text,
+            "tag_length": tag_length,
+            "ban_tags": ban_tags,
+            "format": format,
+            "temperature": temperature,
+            "top_p": top_p,
+            "top_k": top_k,
+            "seed": random.randint(0, 2**32 - 1) if seed == -1 else seed,
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "x-illustrious-api-key": ILLUSTRIOUS_API_KEY,
+        }
+        url = "https://api.v1.illustrious-xl.ai/api/text-enhance/tag-booster"
+        try:
+            r = requests.post(url, headers=headers, json=payload, timeout=120)
+            r.raise_for_status()
+            data = r.json()
+            tags = data.get("output", "")
+            usage = data.get("stardustUsage", 0)
+            balance = data.get("stardustBalance", 0)
+            if mode == "merge input string":
+                tags = text + ", " + tags
+            print(f'tags: {tags}')
+            print(f'tag booster usage: {usage}')
+            print(f'balance: {balance}')
+            return (tags, usage, balance)
+        except Exception as e:
+            message = str(r.json().get("message")) + f" (status code: {r.status_code})"
+            raise RuntimeError(f"IllustrioustagBooster error: {message}")
+
+@fundamental_node
+class IllustriousMoodEnhancer:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "text": ("STRING", {"multiline": True, "default": ""}),
+                "mode": (["merge input string", "just prompt"], {"default": "just prompt"}),
+            }
+        }
+
+    RETURN_TYPES = ("STRING","STRING","STRING")
+    RETURN_NAMES = ("prompt","usage","balance")
+    FUNCTION = "enhance_mood"
+    custom_name = "Illustrious-XL-MoodEnhancer"
+    CATEGORY = "Illustrious"
+
+    def enhance_mood(self, text, mode):
+        payload = {"text": text}
+        headers = {
+            "Content-Type": "application/json",
+            "x-illustrious-api-key": ILLUSTRIOUS_API_KEY,
+        }
+        url = "https://api.v1.illustrious-xl.ai/api/text-enhance/mood-enhancer"
+        try:
+            r = requests.post(url, headers=headers, json=payload, timeout=120)
+            r.raise_for_status()
+            data = r.json()
+            prompt = data.get("output", "")
+            usage = data.get("stardustUsage", 0)
+            balance = data.get("stardustBalance", 0)
+            if mode == "merge input string":
+                prompt = text + ", " + prompt
+            print(f'prompt: {prompt}')
+            print(f'mood enhancer usage: {usage}')
+            print(f'balance: {balance}')
+            return (prompt, usage, balance)
+        except Exception as e:
+            message = str(r.json().get("message")) + f" (status code: {r.status_code})"
+            raise RuntimeError(f"IllustriousMoodEnhancer error: {message}")
 
 CLASS_MAPPINGS = get_node_names_mappings(fundamental_classes)
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(fundamental_classes)
