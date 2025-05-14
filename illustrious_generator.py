@@ -174,7 +174,7 @@ class IllustriousTagBooster:
                 "text": ("STRING", {"multiline": True, "default": ""}),
                 "tag_length": (["short", "medium", "long"], {"default": "short"}),
                 "ban_tags": ("STRING", {"multiline": True, "default": ""}),
-                "format": ("STRING", {"multiline": True, "default": "<|special|>, \n<|characters|>, <|copyrights|>, \n<|artist|>, \n<|general|>, \n<|quality|>, <|meta|>, <|rating|>"}),
+                "format": ("STRING", {"multiline": True, "default": "<|special|>, <|characters|>, <|quality|>, <|meta|>, <|rating|>"}),
                 "temperature": ("FLOAT", {"min": 0.0, "max": 1.0, "default": 0.5}),
                 "top_p": ("FLOAT", {"min": 0.0, "max": 1.0, "default": 0.9}),
                 "top_k": ("INT", {"min": 0, "max": 100, "default": 100}),
