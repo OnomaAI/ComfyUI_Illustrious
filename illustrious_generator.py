@@ -135,7 +135,7 @@ class IllustriousGenerate:
             print(f"IllustriousGenerate: {base_params}")
             try:
                 url = "https://api.v1.illustrious-xl.ai/api/text-to-image/generate"
-                r = requests.post(url, headers=headers, json=p, verify=False, timeout=120)
+                r = requests.post(url, headers=headers, json=p, verify=False, timeout=600)
                 r.raise_for_status()
                 return r.json()
             except Exception as e:
