@@ -9,4 +9,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Comfy-Org/publish-node-action@v1
         with:
-          token: ${{ secrets.COMFYUI }}
+          personal_access_token: ${{ secrets.COMFYUI }}
