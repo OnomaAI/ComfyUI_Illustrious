@@ -73,7 +73,7 @@ class IllustriousGenerate:
     RETURN_TYPES = ("IMAGE","STRING","STRING")
     RETURN_NAMES = ("images","usage","balance")
     FUNCTION = "generate"
-    custom_name = "Illustrious-XL-API-Generator"
+    custom_name = "Illustrious-Generator"
     CATEGORY = "Illustrious"
 
     @staticmethod
@@ -172,9 +172,9 @@ class IllustriousTagBooster:
         return {
             "required": {
                 "text": ("STRING", {"multiline": True, "default": ""}),
-                "tag_length": (["short", "medium", "long"], {"default": "short"}),
+                "tag_length": (["short", "long"], {"default": "short"}),
                 "ban_tags": ("STRING", {"multiline": True, "default": ""}),
-                "format": ("STRING", {"multiline": True, "default": "<|special|>, \n<|characters|>, <|copyrights|>, \n<|artist|>, \n<|general|>, \n<|quality|>, <|meta|>, <|rating|>"}),
+                "format": ("STRING", {"multiline": True, "default": "<|special|>, <|characters|>, <|quality|>, <|meta|>, <|rating|>"}),
                 "temperature": ("FLOAT", {"min": 0.0, "max": 1.0, "default": 0.5}),
                 "top_p": ("FLOAT", {"min": 0.0, "max": 1.0, "default": 0.9}),
                 "top_k": ("INT", {"min": 0, "max": 100, "default": 100}),
@@ -186,7 +186,7 @@ class IllustriousTagBooster:
     RETURN_TYPES = ("STRING","STRING","STRING")
     RETURN_NAMES = ("tags","usage","balance")
     FUNCTION = "boost_tags"
-    custom_name = "Illustrious-XL-TagBooster"
+    custom_name = "Illustrious-TagBooster"
     CATEGORY = "Illustrious"
 
     def boost_tags(
@@ -247,7 +247,7 @@ class IllustriousMoodEnhancer:
     RETURN_TYPES = ("STRING","STRING","STRING")
     RETURN_NAMES = ("prompt","usage","balance")
     FUNCTION = "enhance_mood"
-    custom_name = "Illustrious-XL-MoodEnhancer"
+    custom_name = "Illustrious-MoodEnhancer"
     CATEGORY = "Illustrious"
 
     def enhance_mood(self, text, mode):
