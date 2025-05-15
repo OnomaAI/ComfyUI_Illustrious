@@ -34,10 +34,11 @@ def fetch_model_names() -> list[str]:
     resp = requests.get(url, headers=headers, timeout=10)
     resp.raise_for_status()
     models = resp.json() 
-    sorted_by_id = sorted(models, key=lambda m: m["id"])
-    return [m["name"] for m in sorted_by_id]
+    return [(m["id"], m["name"]) for m in models]
 
-MODELS = fetch_model_names()
+MODEL_INFO = fetch_model_names()
+MODEL_NAMES = [m[1] for m in MODEL_INFO]
+MODEL_IDS = [m[0] for m in MODEL_INFO]
 
 
 @fundamental_node
@@ -46,7 +47,7 @@ class IllustriousGenerate:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_name": (MODELS,),
+                "model_name": (MODEL_NAMES,),
                 "width": ("INT", {"min": 256, "max": 2048, "default": 1024}),
                 "height": ("INT", {"min": 256, "max": 2048, "default": 1024}),
                 "prompt": ("STRING", {"multiline": True, "default": "1 girl"}),
@@ -114,7 +115,7 @@ class IllustriousGenerate:
         n_requests,
     ):
         base_params = {
-            "modelId": MODELS.index(model_name) + 1,
+            "modelId": MODEL_IDS[MODEL_NAMES.index(model_name)],
             "steps": steps,
             "width": width,
             "height": height,
