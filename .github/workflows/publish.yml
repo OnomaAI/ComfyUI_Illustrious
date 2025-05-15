@@ -1,12 +1,14 @@
 name: Publish to Comfy Registry
 on:
   push:
-    tags: ["v1.0.0"]
+    tags: ["v*"]
+    
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: Comfy-Org/publish-node-action@v1
         with:
-          personal_access_token: ${{ secrets.COMFYUI }}
+          token: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
